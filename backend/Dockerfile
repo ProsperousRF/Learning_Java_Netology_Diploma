@@ -1,4 +1,5 @@
-FROM amazoncorretto:17.0.7-al2023-headless
+FROM amazoncorretto:17-alpine
+WORKDIR /app
+COPY backend/target/cloud-storage-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8081
-COPY target/cloud-storage-0.0.1-SNAPSHOT.jar /app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+CMD ["java", "-jar", "app.jar"]

@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: cloudstorage
+      POSTGRES_USER: cloudstorage
+      POSTGRES_PASSWORD: cloudstorage
+    volumes:
+      - cloud-storage-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db/cloudstorage
+      SPRING_DATASOURCE_USERNAME: cloudstorage
+      SPRING_DATASOURCE_PASSWORD: cloudstorage
+    volumes:
+      - ./backend/target:/app/target
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend-Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+volumes:
+  cloud-storage-data:
