@@ -1,38 +1,84 @@
-version: '3'
+version: '3.5'
 
 services:
   db:
+    container_name: cloudstorage-db
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: cloudstorage
       POSTGRES_USER: cloudstorage
       POSTGRES_PASSWORD: cloudstorage
     volumes:
-      - cloud-storage-data:/var/lib/postgresql/data
+      - cloud-storage-db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - backlan
+
   backend:
+    container_name: cloudstorage-backend
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db/cloudstorage
       SPRING_DATASOURCE_USERNAME: cloudstorage
       SPRING_DATASOURCE_PASSWORD: cloudstorage
     volumes:
-      - ./backend/target:/app/target
-    ports:
-      - "8081:8081"
-    depends_on:
-      - db
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend-Dockerfile
+      - cloud-storage-files:/app/
     ports:
       - "8080:8080"
     depends_on:
+      - db
+    networks:
+      - backlan
+  
+  frontend:
+    container_name: cloudstorage-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
       - backend
+    networks:
+      - frontlan
+  
+  pgadmin:
+      container_name: pgadmin
+      image: dpage/pgadmin4
+      environment:
+        PGADMIN_DEFAULT_EMAIL: admin@admin.com
+        PGADMIN_DEFAULT_PASSWORD: root
+      ports:
+        - "9090:80"
+      depends_on:
+        - db
+      volumes:
+        - pgadmin-data:/var/lib/pgadmin
+      networks:
+        - backlan
 
 volumes:
-  cloud-storage-data:
+  cloud-storage-db:
+  cloud-storage-files:
+  pgadmin-data:
+
+networks:
+  backlan:
+    name: backlan
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.100.0/29"
+          gateway: "192.168.100.1"
+        
+  frontlan:
+    name: frontlan
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.100.10/29"
+          gateway: "192.168.100.9"
+
