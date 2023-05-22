@@ -10,8 +10,6 @@ services:
       POSTGRES_PASSWORD: cloudstorage
     volumes:
       - cloud-storage-db:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     restart: unless-stopped
     networks:
       - backlan
@@ -26,8 +24,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: cloudstorage
     volumes:
       - cloud-storage-files:/app/
-    ports:
-      - "8080:8080"
     depends_on:
       - db
     networks:
@@ -38,12 +34,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    environment:
+      VUE_APP_BASE_URL: http://cloudstorage-backend:8080
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
       - backend
-    networks:
-      - frontlan
   
   pgadmin:
       container_name: pgadmin
@@ -68,17 +64,4 @@ volumes:
 networks:
   backlan:
     name: backlan
-    ipam:
-      driver: default
-      config:
-        - subnet: "192.168.100.0/29"
-          gateway: "192.168.100.1"
-        
-  frontlan:
-    name: frontlan
-    ipam:
-      driver: default
-      config:
-        - subnet: "192.168.100.10/29"
-          gateway: "192.168.100.9"
 
